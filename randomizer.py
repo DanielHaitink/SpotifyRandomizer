@@ -3,13 +3,14 @@ import os
 import spotipy.util as util
 from random import shuffle
 
-os.environ["SPOTIPY_CLIENT_ID"]     = ""
+os.environ["SPOTIPY_CLIENT_ID"] = ""
 os.environ["SPOTIPY_CLIENT_SECRET"] = ""
-os.environ["SPOTIPY_REDIRECT_URI"]  = ""
+os.environ["SPOTIPY_REDIRECT_URI"] = ""
 
 scope = 'user-library-read playlist-read-private playlist-modify-private playlist-modify-public'
 
-class FailedAuth(BaseException) :
+
+class FailedAuth(BaseException):
     """Failed authentication for spotify"""
 
     def __init__(self, message):
