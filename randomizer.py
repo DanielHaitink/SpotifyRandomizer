@@ -70,7 +70,7 @@ class SpotifyRandomizer:
         self._username = username
         self._sp = sp
         self._playlist = None
-        self._randomPostfix = " Random"
+        self._randomPlaylistName = "{} Random"
 
     def setPlaylistById(self, playlistId):
         try:
@@ -131,10 +131,10 @@ class SpotifyRandomizer:
             self._sp.user_playlist_remove_all_occurrences_of_tracks(self._username, playlist["id"], chunk)
 
     def __getRandomPlaylist__(self):
-        return self.__findPlaylist__(self._playlist["name"] + self._randomPostfix)
+        return self.__findPlaylist__(self._playlist["name"].format(self._randomPlaylistName))
 
     def __createRandomPlaylist__(self):
-        return self._sp.user_playlist_create(self._username, self._playlist["name"] + " Random", False)
+        return self._sp.user_playlist_create(self._username, self._randomPlaylistName.format(self._playlist["name"]), False)
 
     def getPlaylistSize(self, playlist=None):
         if playlist is not None:
