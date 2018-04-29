@@ -1,14 +1,21 @@
 # SpotifyRandomizer
-Creates a spotify list from an existing one, with tracks placed in a random order
+Truly randomize your Spotify playlists. This program creates a Spotify playlist from an existing one, with it's tracks placed in a random order, saved under a new name.
+
+![image](https://user-images.githubusercontent.com/30472563/39407829-33e9b202-4bd5-11e8-9ec1-7a21788163a1.png)
+<sup>*\* An example of running the program.*</sup>
+![image](https://user-images.githubusercontent.com/30472563/39255472-4c0c4f20-48b5-11e8-9d36-3adc0bed5f0a.png)
+<sup>*\* The web server after authenticating. This only needs to be done once (per user).*</sup>
 
 ## Required packages
 
 To use SpotifyRandomizer, you need [spotipy](https://github.com/plamere/spotipy).
-This can be installed by doing: `pip3 install spotipy`
+You can install it using `pip`: `pip3 install spotipy`
 
 ## Setup
 
-First you have to create a spotify application, so you can use spotipy. You can do this at the [spotify website](https://developer.spotify.com/my-applications/). You need to put the client ID, client sectret and redirect URL into `randomizer.py`.
+1. Create a spotify application so you can use `spotipy`. You can do this at the [Spotify developer website](https://developer.spotify.com/my-applications/).
+2. Put your client ID & client secret into `randomizer.py`. The default redirect URL is `http://localhost:14523` for the local webserver.
+3. You're done - you can basically change anything else you'd like.
 
 ## Run
 
