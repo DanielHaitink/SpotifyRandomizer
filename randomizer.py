@@ -1,11 +1,14 @@
 import spotipy
 import os
 import spotipy.util as util
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from threading import Thread
 from random import shuffle
 
 os.environ["SPOTIPY_CLIENT_ID"] = ""
 os.environ["SPOTIPY_CLIENT_SECRET"] = ""
-os.environ["SPOTIPY_REDIRECT_URI"] = ""
+SERVER_PORT = 14523
+os.environ["SPOTIPY_REDIRECT_URI"] = "http://localhost:{}".format(SERVER_PORT)
 
 scope = 'user-library-read playlist-read-private playlist-modify-private playlist-modify-public'
 
@@ -28,12 +31,40 @@ class NotFound(BaseException):
         return repr(self.message)
 
 
+class MyHTTPHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write('<html><body><h1 style="text-align:center">Great! Now go back to the python program and insert the URL of this page:</h1><button onclick="copy()" style="margin: 0 auto;display:block">Copy to clipboard</button><textarea id="textarea" style="display: block; margin: 0 auto; width: 60%"></textarea><script>var txt = document.getElementById("textarea"); txt.value = window.location.href;txt.select();function copy() {txt.select();document.execCommand("copy");}</script></body></html>'.encode('utf-8'))
+
+    def log_message(self, format, *args):
+        return
+
+
+class StoppableSilentHTTPServer(HTTPServer):
+    stopped = False
+
+    def __init__(self, *args, **kw):
+        HTTPServer.__init__(self, *args, **kw)
+
+    def serve_forever(self):
+        while not self.stopped:
+            self.handle_request()
+
+    def force_stop(self):
+        self.stopped = True
+        self.server_close()
+
+
 class SpotifyAuth:
     def __init__(self, username):
         self._username = username
         self._sp = None
 
     def wait_for_auth(self):
+        self.httpd = StoppableSilentHTTPServer(('', SERVER_PORT), MyHTTPHandler)
+        Thread(target=self.httpd.serve_forever).start()
         token = util.prompt_for_user_token(self._username, scope)
 
         if token:
@@ -43,6 +74,9 @@ class SpotifyAuth:
 
     def get_spotify(self):
         return self._sp
+
+    def stop_server(self):
+        self.httpd.force_stop()
 
 
 def __list_add_tracks__(list_object, tracks):
