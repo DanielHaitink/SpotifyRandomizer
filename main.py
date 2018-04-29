@@ -30,7 +30,7 @@ def authenticate_spotify(username):
     except r.FailedAuth:
         print("Authentication failed")
         sys.exit()
-
+    auth.stop_server()
     return auth
 
 
