@@ -7,7 +7,7 @@ os.environ["SPOTIPY_CLIENT_ID"] = ""
 os.environ["SPOTIPY_CLIENT_SECRET"] = ""
 os.environ["SPOTIPY_REDIRECT_URI"] = ""
 
-scope = 'user-library-read playlist-read-private playlist-modify-private playlist-modify-public'
+scope = 'user-library-read playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public'
 
 
 class FailedAuth(BaseException):
