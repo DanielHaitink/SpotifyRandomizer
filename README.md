@@ -27,3 +27,7 @@ You can also give that information as an argument, like this `python3 main.py 12
 The playlists can be the name of the playlist or the ID of the playlist (found in the URL). These playlists have to be owned by you.
 
 When you run the program for the first time, it will open the spotify website for authorization. Then you need to copy the redirected URL into the commandline. After this, the program should work.
+
+### Other
+
+Also check out [the repo SpotifyNoDupes](https://github.com/stavlocker/spotifynodupes) if you want to get rid of your duplicate songs in playlists.
