@@ -10,7 +10,7 @@ os.environ["SPOTIPY_CLIENT_SECRET"] = ""
 SERVER_PORT = 14523
 os.environ["SPOTIPY_REDIRECT_URI"] = "http://localhost:{}".format(SERVER_PORT)
 
-scope = 'user-library-read playlist-read-private playlist-modify-private playlist-modify-public'
+scope = 'user-library-read playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public'
 
 
 class FailedAuth(BaseException):
