@@ -1,13 +1,16 @@
 import spotipy
 import os
 import spotipy.util as util
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from threading import Thread
 from random import shuffle
 
 os.environ["SPOTIPY_CLIENT_ID"] = ""
 os.environ["SPOTIPY_CLIENT_SECRET"] = ""
-os.environ["SPOTIPY_REDIRECT_URI"] = ""
+SERVER_PORT = 14523
+os.environ["SPOTIPY_REDIRECT_URI"] = "http://localhost:{}".format(SERVER_PORT)
 
-scope = 'user-library-read playlist-read-private playlist-modify-private playlist-modify-public'
+scope = 'user-library-read playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public'
 
 
 class FailedAuth(BaseException):
@@ -28,12 +31,40 @@ class NotFound(BaseException):
         return repr(self.message)
 
 
+class MyHTTPHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write('<html><body><h1 style="text-align:center">Great! Now go back to the python program and insert the URL of this page:</h1><button onclick="copy()" style="margin: 0 auto;display:block">Copy to clipboard</button><textarea id="textarea" style="display: block; margin: 0 auto; width: 60%"></textarea><script>var txt = document.getElementById("textarea"); txt.value = window.location.href;txt.select();function copy() {txt.select();document.execCommand("copy");}</script></body></html>'.encode('utf-8'))
+
+    def log_message(self, format, *args):
+        return
+
+
+class StoppableSilentHTTPServer(HTTPServer):
+    stopped = False
+
+    def __init__(self, *args, **kw):
+        HTTPServer.__init__(self, *args, **kw)
+
+    def serve_forever(self):
+        while not self.stopped:
+            self.handle_request()
+
+    def force_stop(self):
+        self.stopped = True
+        self.server_close()
+
+
 class SpotifyAuth:
     def __init__(self, username):
         self._username = username
         self._sp = None
 
-    def waitForAuth(self):
+    def wait_for_auth(self):
+        self.httpd = StoppableSilentHTTPServer(('', SERVER_PORT), MyHTTPHandler)
+        Thread(target=self.httpd.serve_forever).start()
         token = util.prompt_for_user_token(self._username, scope)
 
         if token:
@@ -41,25 +72,28 @@ class SpotifyAuth:
         else:
             raise FailedAuth
 
-    def getSpotify(self):
+    def get_spotify(self):
         return self._sp
 
+    def stop_server(self):
+        self.httpd.force_stop()
 
-def __listAddTracks__(listObject, tracks):
+
+def __list_add_tracks__(list_object, tracks):
     for item in tracks["items"]:
         track = item["track"]
         if track["id"] is not None:
-            listObject.append(track["id"])
-    return listObject
+            list_object.append(track["id"])
+    return list_object
 
 
-def __addPlaylistToList__(playlistList, playlists):
+def __add_playlist__(playlist_list, playlists):
     for item in playlists["items"]:
-        playlistList.append(item)
-    return playlistList
+        playlist_list.append(item)
+    return playlist_list
 
 
-def __chunkList__(data, size):
+def __chunk_list__(data, size):
     return [data[x:x + size] for x in range(0, len(data), size)]
 
 
@@ -70,24 +104,24 @@ class SpotifyRandomizer:
         self._username = username
         self._sp = sp
         self._playlist = None
-        self._randomPostfix = " Random"
+        self._random_playlist_name = "{} Random"
 
-    def setPlaylistById(self, playlistId):
+    def set_playlist_by_id(self, playlist_id):
         try:
-            self._playlist = self._sp.user_playlist(self._username, playlistId)
+            self._playlist = self._sp.user_playlist(self._username, playlist_id)
         except BaseException:
             raise NotFound("No playlist found")
 
         if self._playlist is None:
             raise NotFound("No playlist found")
 
-    def setPlaylistByName(self, name):
-        self._playlist = self.__findPlaylist__(name)
+    def set_playlist_by_name(self, name):
+        self._playlist = self.__find_playlist__(name)
 
         if self._playlist is None:
             raise NotFound("No playlist found")
 
-    def __findPlaylist__(self, name):
+    def __find_playlist__(self, name):
         playlists = self._sp.user_playlists(self._username)
 
         for item in playlists["items"]:
@@ -95,26 +129,26 @@ class SpotifyRandomizer:
                 return item
         return None
 
-    def getPlaylist(self):
+    def get_playlist(self):
         return self._playlist
 
-    def getPlaylistTracks(self, playlist=None):
+    def get_playlist_tracks(self, playlist=None):
         if playlist is None:
             playlist = self._playlist
 
-        trackList = []
+        track_list = []
         result = self._sp.user_playlist(self._username, playlist["id"], fields="tracks,next")
         tracks = result["tracks"]
-        trackList = __listAddTracks__(trackList, tracks)
+        track_list = __list_add_tracks__(track_list, tracks)
 
         while tracks["next"]:
             tracks = self._sp.next(tracks)
-            trackList = __listAddTracks__(trackList, tracks)
+            track_list = __list_add_tracks__(track_list, tracks)
 
-        return trackList
+        return track_list
 
-    def showPlaylistTracks(self):
-        tracks = self.getPlaylistTracks()
+    def show_playlist_tracks(self):
+        tracks = self.get_playlist_tracks()
 
         if self._playlist is None:
             return
@@ -122,59 +156,61 @@ class SpotifyRandomizer:
             track = item['track']
             print("%32.32s %s" % (track['artists'][0]['name'], track['name']))
 
-    def __removeAllTracks__(self, playlist):
+    def __remove_all_tracks__(self, playlist):
         if playlist is None:
             return
 
-        tracks = self.getPlaylistTracks(playlist)
-        for chunk in __chunkList__(tracks, 100):
+        tracks = self.get_playlist_tracks(playlist)
+        for chunk in __chunk_list__(tracks, 100):
             self._sp.user_playlist_remove_all_occurrences_of_tracks(self._username, playlist["id"], chunk)
 
-    def __getRandomPlaylist__(self):
-        return self.__findPlaylist__(self._playlist["name"] + self._randomPostfix)
+    def __get_random_playlist__(self):
+        return self.__find_playlist__(self._playlist["name"].format(self._random_playlist_name))
 
-    def __createRandomPlaylist__(self):
-        return self._sp.user_playlist_create(self._username, self._playlist["name"] + " Random", False)
+    def __create_random_playlist__(self):
+        return self._sp.user_playlist_create(self._username,
+                                             self._random_playlist_name.format(self._playlist["name"]),
+                                             False)
 
-    def getPlaylistSize(self, playlist=None):
+    def get_playlist_size(self, playlist=None):
         if playlist is not None:
             return playlist["tracks"]["total"]
         elif self._playlist is not None:
             return self._playlist["tracks"]["total"]
 
-    def addTracksToPlaylist(self, tracks, playlist=None):
+    def add_tracks_to_playlist(self, tracks, playlist=None):
         if playlist is None and self._playlist is not None:
             playlist = self._playlist
         elif self._playlist is None:
             return
 
-        for chunk in __chunkList__(tracks, 100):
+        for chunk in __chunk_list__(tracks, 100):
             self._sp.user_playlist_add_tracks(self._username, playlist["id"], chunk)
 
-    def randomizePlaylist(self):
+    def randomize_playlist(self):
         if self._playlist is None:
             raise TypeError
 
-        randomPlaylist = self.__getRandomPlaylist__()
+        random_playlist = self.__get_random_playlist__()
 
-        if randomPlaylist is None:
-            randomPlaylist = self.__createRandomPlaylist__()
+        if random_playlist is None:
+            random_playlist = self.__create_random_playlist__()
 
-        if self.getPlaylistSize(randomPlaylist) > 1:
-            self.__removeAllTracks__(randomPlaylist)
+        if self.get_playlist_size(random_playlist) > 1:
+            self.__remove_all_tracks__(random_playlist)
 
-        tracks = self.getPlaylistTracks()
+        tracks = self.get_playlist_tracks()
         shuffle(tracks)
 
-        self.addTracksToPlaylist(tracks, randomPlaylist)
+        self.add_tracks_to_playlist(tracks, random_playlist)
 
-    def getAllPlaylists(self):
-        playlistList = []
+    def get_all_playlists(self):
+        playlist_list = []
 
         playlists = self._sp.user_playlists(self._username)
-        __addPlaylistToList__(playlistList, playlists)
+        __add_playlist__(playlist_list, playlists)
 
         while playlists["next"]:
             playlists = self._sp.next(playlists)
-            __addPlaylistToList__(playlistList, playlists)
-        return playlistList
+            __add_playlist__(playlist_list, playlists)
+        return playlist_list
