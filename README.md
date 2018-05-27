@@ -1,4 +1,4 @@
-# SpotifyRandomizer
+<p align="center"><img alt="SpotifyRandomizer" src="SpotifyRandomizer.png" width="350"/></p> <!-- Gross HTML because of GitHub's markdown -->
 Creates a spotify list from an existing one, with tracks placed in a random order
 
 ## Required packages
