@@ -6,7 +6,6 @@ Truly randomize your Spotify playlists. This program creates a Spotify playlist 
 
 ![image](https://user-images.githubusercontent.com/30472563/39255472-4c0c4f20-48b5-11e8-9d36-3adc0bed5f0a.png)
 <sup>*\* The web server after authenticating. This only needs to be done once (per user).*</sup>
->>>>>>> master
 
 ## Required packages
 
