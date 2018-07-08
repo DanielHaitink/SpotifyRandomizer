@@ -5,8 +5,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from threading import Thread
 from random import shuffle
 
-os.environ["SPOTIPY_CLIENT_ID"] = ""
-os.environ["SPOTIPY_CLIENT_SECRET"] = ""
+# os.environ["SPOTIPY_CLIENT_ID"] = ""
+# os.environ["SPOTIPY_CLIENT_SECRET"] = ""
 SERVER_PORT = 14523
 os.environ["SPOTIPY_REDIRECT_URI"] = "http://localhost:{}".format(SERVER_PORT)
 
@@ -104,7 +104,7 @@ class SpotifyRandomizer:
         self._username = username
         self._sp = sp
         self._playlist = None
-        self._random_playlist_name = "{} Random"
+        self._random_playlist_name = "{} (Randomized)"
 
     def set_playlist_by_id(self, playlist_id):
         try:
@@ -129,9 +129,6 @@ class SpotifyRandomizer:
                 return item
         return None
 
-    def get_playlist(self):
-        return self._playlist
-
     def get_playlist_tracks(self, playlist=None):
         if playlist is None:
             playlist = self._playlist
@@ -147,15 +144,6 @@ class SpotifyRandomizer:
 
         return track_list
 
-    def show_playlist_tracks(self):
-        tracks = self.get_playlist_tracks()
-
-        if self._playlist is None:
-            return
-        for i, item in enumerate(tracks['items']):
-            track = item['track']
-            print("%32.32s %s" % (track['artists'][0]['name'], track['name']))
-
     def __remove_all_tracks__(self, playlist):
         if playlist is None:
             return
@@ -165,7 +153,7 @@ class SpotifyRandomizer:
             self._sp.user_playlist_remove_all_occurrences_of_tracks(self._username, playlist["id"], chunk)
 
     def __get_random_playlist__(self):
-        return self.__find_playlist__(self._playlist["name"].format(self._random_playlist_name))
+        return self.__find_playlist__(self._random_playlist_name.format(self._playlist["name"]))
 
     def __create_random_playlist__(self):
         return self._sp.user_playlist_create(self._username,
@@ -197,6 +185,10 @@ class SpotifyRandomizer:
             random_playlist = self.__create_random_playlist__()
 
         if self.get_playlist_size(random_playlist) > 1:
+            # Just in case, so the playlist randomized never gets deleted due to a bug again.
+            if random_playlist['id'] == self._playlist['id']:
+                print("FATAL ERROR: Program tried to erase original playlist due to a bug. Please report this behaviour.")
+                return
             self.__remove_all_tracks__(random_playlist)
 
         tracks = self.get_playlist_tracks()
