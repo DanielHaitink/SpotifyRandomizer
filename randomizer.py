@@ -5,6 +5,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from threading import Thread
 from random import shuffle
 
+import requests
+
 # os.environ["SPOTIPY_CLIENT_ID"] = ""
 # os.environ["SPOTIPY_CLIENT_SECRET"] = ""
 SERVER_PORT = 14523
@@ -54,6 +56,8 @@ class StoppableSilentHTTPServer(HTTPServer):
 
     def force_stop(self):
         self.stopped = True
+        # Ensure a last run of the thread so it can exit
+        requests.get(url='http://localhost:14523')
         self.server_close()
 
 
@@ -61,6 +65,7 @@ class SpotifyAuth:
     def __init__(self, username):
         self._username = username
         self._sp = None
+        self.httpd = None
 
     def wait_for_auth(self):
         self.httpd = StoppableSilentHTTPServer(('', SERVER_PORT), MyHTTPHandler)
@@ -104,7 +109,7 @@ class SpotifyRandomizer:
         self._username = username
         self._sp = sp
         self._playlist = None
-        self._random_playlist_name = "{} (Randomized)"
+        self._random_playlist_name = "{} Random"
 
     def set_playlist_by_id(self, playlist_id):
         try:
@@ -122,9 +127,9 @@ class SpotifyRandomizer:
             raise NotFound("No playlist found")
 
     def __find_playlist__(self, name):
-        playlists = self._sp.user_playlists(self._username)
+        playlists = self.get_all_playlists()
 
-        for item in playlists["items"]:
+        for item in playlists:
             if item["name"] == name:
                 return item
         return None
