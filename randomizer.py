@@ -4,11 +4,12 @@ import spotipy.util as util
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from threading import Thread
 from random import shuffle
-
 import requests
 
 # os.environ["SPOTIPY_CLIENT_ID"] = ""
 # os.environ["SPOTIPY_CLIENT_SECRET"] = ""
+# os.environ["USER"] = ""
+# os.environ["PLAYLISTS"] = ""
 SERVER_PORT = 14523
 os.environ["SPOTIPY_REDIRECT_URI"] = "http://localhost:{}".format(SERVER_PORT)
 
@@ -109,7 +110,7 @@ class SpotifyRandomizer:
         self._username = username
         self._sp = sp
         self._playlist = None
-        self._random_playlist_name = "{} Random"
+        self._random_playlist_name = "{} (Randomized)"
 
     def set_playlist_by_id(self, playlist_id):
         try:
