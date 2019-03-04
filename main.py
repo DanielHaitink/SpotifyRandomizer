@@ -1,4 +1,6 @@
 import randomizer as r
+import json
+import os
 import sys
 import re
 
@@ -72,19 +74,26 @@ def get_playlists_by_input(randomizer):
     return playlists
 
 
-def main():
-    if len(sys.argv) > 1:
-        username = sys.argv[1]
+def lambda_handler(event, context):
+
+    if os.environ["USER"]:
+        username = os.environ["USER"]
     else:
-        username = input("Please type in your username: ")
+        if len(sys.argv) > 1:
+            username = sys.argv[1]
+        else:
+            username = input("Please type in your username: ")
 
     auth = authenticate_spotify(username)
     randomizer = r.SpotifyRandomizer(username, auth.get_spotify())
 
-    if len(sys.argv) > 2:
-        playlists = sys.argv[2: len(sys.argv)]
+    if os.environ["PLAYLISTS"]:
+        playlists = os.environ["PLAYLISTS"].split(',')
     else:
-        playlists = get_playlists_by_input(randomizer)
+        if len(sys.argv) > 2:
+            playlists = sys.argv[2: len(sys.argv)]
+        else:
+            playlists = get_playlists_by_input(randomizer)
 
     for playlist in playlists:
         if not is_playlist_found(randomizer, playlist):
@@ -93,6 +102,11 @@ def main():
         randomizer.set_playlist_by_name(playlist)
         randomizer.randomize_playlist()
 
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Hello from Lambda!')
+    }
+
 
 if __name__ == "__main__":
-    main()
+    lambda_handler(None, None)

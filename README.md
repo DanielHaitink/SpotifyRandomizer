@@ -37,7 +37,27 @@ You can install it using `pip`: `pip3 install spotipy`
         You only need to do this once.
     
     The default redirect URL is `http://localhost:14523` for the local webserver.
-3. You're done - you can basically change anything else you'd like.
+3. Optionally, you can give the program the Spotify username and the playlists to shuffle. You can do this in 2 ways:
+    1. Uncomment the lines in `randomizer.py` _(by removing the # in the beginning of the line)_ that set these variables and inputting yours.
+       ```python
+       os.environ["USER"] = "myusername"
+       os.environ["PLAYLISTS"] = "Playlist1,Playlist2,Playlist3"
+       ```
+    2. Export those variables using your terminal. On windows:
+
+       ```cmd
+       SET USER=myusername
+       SET PLAYLISTS=Playlist1,Playlist2,Playlist3
+       ```
+
+        On linux:
+        ```bash
+        export USER=myusername
+        export PLAYLISTS=Playlist1,Playlist2,Playlist3
+        ```
+
+        You only need to do this once.
+4. You're done - you can basically change anything else you'd like.
 
 ## Run
 
